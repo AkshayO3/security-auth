@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express=require("express")
 const bodyParser=require("body-parser")
 const ejs=require("ejs")
@@ -17,8 +18,7 @@ var userSchema = new mongoose.Schema({
     password: String
 })
 
-const secret = "This is the secret string."
-userSchema.plugin(encrypt, {secret: secret, encryptedFields: ['password']})
+userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ['password']})
 const User = mongoose.model('User', userSchema)
 
 app.get("/", (req, res) => {
@@ -51,7 +51,7 @@ app.post("/login",(req,res)=>{
             res.render("secrets")
         }else{
             console.log("Incorrect Password")}
-            // res.redirect("/")
+        // res.redirect("/")
     }).catch((err)=>{
         console.log("User not found.")
     })
