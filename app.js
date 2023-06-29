@@ -3,7 +3,7 @@ const express=require("express")
 const bodyParser=require("body-parser")
 const ejs=require("ejs")
 const mongoose = require("mongoose")
-const encrypt = require("mongoose-encryption")
+const md5 = require("md5")
 
 const app=express()
 
@@ -18,7 +18,7 @@ var userSchema = new mongoose.Schema({
     password: String
 })
 
-userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ['password']})
+
 const User = mongoose.model('User', userSchema)
 
 app.get("/", (req, res) => {
@@ -36,7 +36,7 @@ app.get("/register",(req,res)=>{
 app.post("/register",(req,res)=>{
     const newUser=new User({
         username:req.body.username,
-        password:req.body.password
+        password: md5(req.body.password)
     })
     newUser.save().then(()=>{
         console.log("User added successfully")
@@ -47,10 +47,11 @@ app.post("/register",(req,res)=>{
 
 app.post("/login",(req,res)=>{
     User.findOne({username:req.body.username}).then((found)=>{
-        if(found.password===req.body.password){
+        if (found.password === md5(req.body.password)) {
             res.render("secrets")
-        }else{
-            console.log("Incorrect Password")}
+        } else {
+            console.log("Incorrect Password")
+        }
         // res.redirect("/")
     }).catch((err)=>{
         console.log("User not found.")
