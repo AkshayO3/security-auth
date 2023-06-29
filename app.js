@@ -3,7 +3,7 @@ const express=require("express")
 const bodyParser=require("body-parser")
 const ejs=require("ejs")
 const mongoose = require("mongoose")
-const md5 = require("md5")
+const bcrypt = require("bcrypt")
 
 const app=express()
 
@@ -33,27 +33,31 @@ app.get("/register",(req,res)=>{
     res.render("register")
 })
 
-app.post("/register",(req,res)=>{
-    const newUser=new User({
-        username:req.body.username,
-        password: md5(req.body.password)
+app.post("/register",(req,res)=> {
+    bcrypt.hash(req.body.password, 8, (err, hash) => {
+        const newUser = new User({
+            username: req.body.username,
+            password: hash
+        })
+        newUser.save().then(() => {
+            console.log("User added successfully")
+            res.render("secrets")
+        }).catch((err) => {
+            console.log("User insertion failed => " + err)
+        })
     })
-    newUser.save().then(()=>{
-        console.log("User added successfully")
-        res.render("secrets")
-    }).catch((err)=>{
-        console.log("User insertion failed => "+err)
-    })})
+})
 
 app.post("/login",(req,res)=>{
-    User.findOne({username:req.body.username}).then((found)=>{
-        if (found.password === md5(req.body.password)) {
-            res.render("secrets")
-        } else {
-            console.log("Incorrect Password")
-        }
-        // res.redirect("/")
-    }).catch((err)=>{
+    User.findOne({username: req.body.username}).then((found) => {
+        bcrypt.compare(req.body.password, found.password, (err, result) => {
+            if (result) {
+                res.render("secrets")
+            } else {
+                console.log("Incorrect Password")
+            }
+        })
+    }).catch(() => {
         console.log("User not found.")
     })
 })
