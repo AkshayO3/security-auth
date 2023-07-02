@@ -22,7 +22,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongoose.connect("mongodb://localhost:27017/userDB", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.URI, {useNewUrlParser: true, useUnifiedTopology: true})
 
 const userSchema = new mongoose.Schema({
     username: String,
@@ -55,7 +55,6 @@ passport.use(new GoogleStrategy({
         userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
     },
     function (accessToken, refreshToken, profile, cb) {
-        console.log(profile);
         User.findOrCreate({google_ID: profile.id}, function (err, user) {
             return cb(err, user);
         });
