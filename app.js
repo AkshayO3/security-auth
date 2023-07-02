@@ -27,7 +27,8 @@ mongoose.connect("mongodb://localhost:27017/userDB", {useNewUrlParser: true, use
 const userSchema = new mongoose.Schema({
     username: String,
     password: String,
-    google_ID: String
+    google_ID: String,
+    secret: String
 });
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
@@ -83,11 +84,11 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/secrets", (req, res) => {
-    if (req.isAuthenticated()) {
-        res.render("secrets");
-    } else {
-        res.redirect("/login");
-    }
+    User.find({'secret': {$ne: null}}).then((found) => {
+        res.render("secrets", {usersWithSecrets: found})
+    }).catch((err) => {
+        console.log("Error in rendering secrets => " + err)
+    })
 });
 
 app.get("/logout", function (req, res) {
@@ -119,11 +120,24 @@ app.post("/login", passport.authenticate("local", {
 
 app.get("/submit", (req, res) => {
     if (req.isAuthenticated()) {
-        res.redirect("/secrets");
+        res.render("submit");
     } else {
         res.redirect("/login");
     }
 });
+
+app.post("/submit", (req, res) => {
+    const secret = req.body.secret
+    User.findById(req.user.id).then((found) => {
+        found.secret = secret
+        found.save().then(() => {
+            res.redirect("/secrets")
+        })
+    }).catch(() => {
+        console.log("Error,couldn't submit secret")
+    })
+
+})
 
 app.listen(3000, () => {
     console.log("Server started on port 3000");
